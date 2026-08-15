@@ -1,0 +1,200 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  OWNER
+  USER
+}
+
+enum UserStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+model User {
+  id              String         @id @default(auto()) @map("_id") @db.ObjectId
+  displayName     String
+  username        String         @unique
+  email           String         @unique
+  phone           String?
+  password        String?
+  googleId        String?        @unique
+  role            Role           @default(USER)
+  status          UserStatus     @default(PENDING)
+  avatar          String?
+  coverPhoto      String?
+  bio             String?
+  location        String?
+  fcmToken        String?
+  businessType    String?
+  businessName    String?
+  interests       String[]
+  
+  isEmailVerified Boolean        @default(false)
+  isPhoneVerified Boolean        @default(false)
+  
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  lastLoginAt     DateTime?
+
+  otps            OTP[]
+  savedItems      SavedItem[]
+  reviews         Review[]
+  trips           Trip[]
+  notifications   Notification[]
+  
+  // Phase 3: Social & Community
+  followedByIds   String[]       @db.ObjectId
+  followingIds    String[]       @db.ObjectId
+  followers       User[]         @relation("UserFollows", fields: [followedByIds], references: [id])
+  following       User[]         @relation("UserFollows", fields: [followingIds], references: [id])
+  
+  posts           Post[]
+  comments        Comment[]
+  reactions       Reaction[]
+  ownedListings   Listing[]
+}
+
+model OTP {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  otpCode   String
+  expiry    DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([userId, otpCode])
+  @@map("otps")
+}
+
+model SavedItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  itemId    String   @db.ObjectId
+  itemType  String
+  createdAt DateTime @default(now())
+}
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetId  String   @db.ObjectId
+  listing   Listing  @relation(fields: [targetId], references: [id])
+  rating    Int
+  content   String
+  images    String[]
+  reply     String?
+  createdAt DateTime @default(now())
+  
+  comments  Comment[]
+  reactions Reaction[]
+}
+
+model Trip {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  startDate DateTime?
+  endDate   DateTime?
+  destinations String[]
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  type      String   @default("system")
+  refId     String?
+  refType   String?
+  actorId   String?
+  actorName String?
+  actorAvatar String?
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Listing {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String
+  type        String
+  location    String
+  images      String[]
+  price       Float?
+  rating      Float    @default(0)
+  ownerId     String?  @db.ObjectId
+  owner       User?    @relation(fields: [ownerId], references: [id])
+  reviews     Review[]
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Post {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String     @db.ObjectId
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String
+  images      String[]
+  location    String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  
+  comments    Comment[]
+  reactions   Reaction[]
+}
+
+model Comment {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  postId      String?   @db.ObjectId
+  post        Post?     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reviewId    String?   @db.ObjectId
+  review      Review?   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId      String    @db.ObjectId
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content     String
+  
+  parentId    String?   @db.ObjectId
+  parent      Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  replies     Comment[] @relation("CommentReplies")
+  
+  likedBy     String[]  @db.ObjectId // Array of user IDs who liked the comment
+
+  createdAt   DateTime  @default(now())
+}
+
+enum ReactionType {
+  LIKE
+  LOVE
+  HAHA
+  WOW
+  SAD
+  ANGRY
+}
+
+model Reaction {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  postId      String?      @db.ObjectId
+  post        Post?        @relation(fields: [postId], references: [id], onDelete: Cascade)
+  reviewId    String?      @db.ObjectId
+  review      Review?      @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId      String       @db.ObjectId
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        ReactionType @default(LIKE)
+  createdAt   DateTime     @default(now())
+}
