@@ -30,6 +30,16 @@ router.get(
   UserController.getUserFeed
 );
 
+router.get(
+  '/:username/followers',
+  UserController.getUserFollowers
+);
+
+router.get(
+  '/:username/following',
+  UserController.getUserFollowing
+);
+
 router.post(
   '/:id/follow',
   auth(Role.USER, Role.ADMIN, Role.SUPER_ADMIN),

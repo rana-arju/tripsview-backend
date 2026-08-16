@@ -5,6 +5,9 @@ import sendResponse from '../../helpers/sendResponse';
 import { ListingService } from './listings.service';
 
 const createListing = catchAsync(async (req: Request, res: Response) => {
+  if (req.user) {
+    req.body.ownerId = req.user.id;
+  }
   const result = await ListingService.createListing(req.body);
 
   sendResponse(res, {
@@ -22,6 +25,8 @@ const getAllListings = catchAsync(async (req: Request, res: Response) => {
     minPrice: req.query.minPrice,
     maxPrice: req.query.maxPrice,
     minRating: req.query.minRating,
+    ownerId: req.query.ownerId,
+    username: req.query.username,
   };
 
   const options = {

@@ -69,7 +69,7 @@ const createReview = async (userId: string, payload: any) => {
 };
 
 const getAllReviews = async (filters: any, options: any) => {
-  const { targetId } = filters;
+  const { targetId, userId, username } = filters;
   const { page, limit, skip, sortBy, sortOrder } = options;
 
   const andConditions: Prisma.ReviewWhereInput[] = [];
@@ -77,6 +77,20 @@ const getAllReviews = async (filters: any, options: any) => {
   if (targetId) {
     andConditions.push({
       targetId,
+    });
+  }
+
+  if (userId) {
+    andConditions.push({
+      userId,
+    });
+  }
+
+  if (username) {
+    andConditions.push({
+      user: {
+        username,
+      },
     });
   }
 

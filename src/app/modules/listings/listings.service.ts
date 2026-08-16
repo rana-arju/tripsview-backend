@@ -11,7 +11,7 @@ const createListing = async (payload: any) => {
 };
 
 const getAllListings = async (filters: any, options: any) => {
-  const { type, search, minPrice, maxPrice, minRating } = filters;
+  const { type, search, minPrice, maxPrice, minRating, ownerId, username } = filters;
   const { page, limit, skip, sortBy, sortOrder } = options;
 
   const andConditions: Prisma.ListingWhereInput[] = [];
@@ -29,6 +29,18 @@ const getAllListings = async (filters: any, options: any) => {
   if (type && type.toLowerCase() !== 'all') {
     andConditions.push({
       type: { equals: type, mode: 'insensitive' },
+    });
+  }
+
+  if (ownerId) {
+    andConditions.push({ ownerId });
+  }
+
+  if (username) {
+    andConditions.push({
+      owner: {
+        username,
+      },
     });
   }
 

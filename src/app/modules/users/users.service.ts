@@ -329,6 +329,82 @@ const getUserFeed = async (username: string, page: number, limit: number, type?:
   };
 };
 
+const getUserFollowers = async (username: string, currentUserId?: string) => {
+  const user = await prisma.user.findUnique({
+    where: { username },
+    select: {
+      followers: {
+        select: {
+          id: true,
+          displayName: true,
+          username: true,
+          avatar: true,
+          bio: true,
+          location: true,
+          followedByIds: true,
+        }
+      }
+    }
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const result = user.followers.map(f => {
+    const isFollowing = currentUserId ? f.followedByIds.includes(currentUserId) : false;
+    return {
+      id: f.id,
+      displayName: f.displayName,
+      username: f.username,
+      avatar: f.avatar,
+      bio: f.bio,
+      location: f.location,
+      isFollowing,
+    };
+  });
+
+  return result;
+};
+
+const getUserFollowing = async (username: string, currentUserId?: string) => {
+  const user = await prisma.user.findUnique({
+    where: { username },
+    select: {
+      following: {
+        select: {
+          id: true,
+          displayName: true,
+          username: true,
+          avatar: true,
+          bio: true,
+          location: true,
+          followedByIds: true,
+        }
+      }
+    }
+  });
+
+  if (!user) {
+    throw new ApiError(httpStatus.NOT_FOUND, 'User not found');
+  }
+
+  const result = user.following.map(f => {
+    const isFollowing = currentUserId ? f.followedByIds.includes(currentUserId) : false;
+    return {
+      id: f.id,
+      displayName: f.displayName,
+      username: f.username,
+      avatar: f.avatar,
+      bio: f.bio,
+      location: f.location,
+      isFollowing,
+    };
+  });
+
+  return result;
+};
+
 export const UserService = {
   getMyProfile,
   updateMyProfile,
@@ -336,4 +412,6 @@ export const UserService = {
   followUser,
   unfollowUser,
   getUserFeed,
+  getUserFollowers,
+  getUserFollowing,
 };

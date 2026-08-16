@@ -18,6 +18,8 @@ const createTrip = catchAsync(async (req: Request, res: Response) => {
 const getAllTrips = catchAsync(async (req: Request, res: Response) => {
   const filters = {
     search: req.query.search,
+    userId: req.query.userId,
+    username: req.query.username,
   };
 
   const options = {

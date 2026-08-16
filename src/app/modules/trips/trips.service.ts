@@ -21,7 +21,7 @@ const createTrip = async (userId: string, payload: any) => {
 };
 
 const getAllTrips = async (filters: any, options: any) => {
-  const { search } = filters;
+  const { search, userId, username } = filters;
   const { page, limit, skip, sortBy, sortOrder } = options;
 
   const andConditions: Prisma.TripWhereInput[] = [];
@@ -32,6 +32,18 @@ const getAllTrips = async (filters: any, options: any) => {
         { name: { contains: search, mode: 'insensitive' } },
         { destinations: { hasSome: [search] } },
       ],
+    });
+  }
+
+  if (userId) {
+    andConditions.push({ userId });
+  }
+
+  if (username) {
+    andConditions.push({
+      user: {
+        username,
+      },
     });
   }
 

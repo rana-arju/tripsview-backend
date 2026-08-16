@@ -24,6 +24,8 @@ const createReview = catchAsync(async (req: Request, res: Response) => {
 const getAllReviews = catchAsync(async (req: Request, res: Response) => {
   const filters = {
     targetId: req.query.targetId,
+    userId: req.query.userId,
+    username: req.query.username,
   };
 
   const options = {

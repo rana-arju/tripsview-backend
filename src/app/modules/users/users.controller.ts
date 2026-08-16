@@ -3,6 +3,9 @@ import httpStatus from 'http-status';
 import catchAsync from '../../helpers/catchAsync';
 import sendResponse from '../../helpers/sendResponse';
 import { UserService } from './users.service';
+import { jwtHelpers } from '../../utils/jwtHelpers';
+import config from '../../../config';
+import { Secret } from 'jsonwebtoken';
 
 const getMyProfile = catchAsync(async (req: Request, res: Response) => {
   const result = await UserService.getMyProfile(req.user.id);
@@ -59,6 +62,56 @@ const unfollowUser = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const getUserFollowers = catchAsync(async (req: Request, res: Response) => {
+  let currentUserId: string | undefined = undefined;
+  let token = req.headers.authorization;
+  if (token) {
+    if (token.startsWith('Bearer ')) {
+      token = token.substring(7);
+    }
+    try {
+      const verified = jwtHelpers.verifyToken(token, config.jwt.access_secret as Secret);
+      currentUserId = verified?.id;
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  const result = await UserService.getUserFollowers(req.params.username, currentUserId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User followers retrieved successfully',
+    data: result,
+  });
+});
+
+const getUserFollowing = catchAsync(async (req: Request, res: Response) => {
+  let currentUserId: string | undefined = undefined;
+  let token = req.headers.authorization;
+  if (token) {
+    if (token.startsWith('Bearer ')) {
+      token = token.substring(7);
+    }
+    try {
+      const verified = jwtHelpers.verifyToken(token, config.jwt.access_secret as Secret);
+      currentUserId = verified?.id;
+    } catch (e) {
+      // Ignore
+    }
+  }
+
+  const result = await UserService.getUserFollowing(req.params.username, currentUserId);
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: 'User following retrieved successfully',
+    data: result,
+  });
+});
+
 const getUserFeed = catchAsync(async (req: Request, res: Response) => {
   const page = parseInt(req.query.page as string) || 1;
   const limit = parseInt(req.query.limit as string) || 10;
@@ -82,5 +135,7 @@ export const UserController = {
   getUserProfileByUsername,
   followUser,
   unfollowUser,
+  getUserFollowers,
+  getUserFollowing,
   getUserFeed,
 };
